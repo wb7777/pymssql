@@ -401,7 +401,7 @@ cdef class Cursor:
 
     def __iter__(self):
         """
-        Return self to make cursors compatibile with Python iteration
+        Return self to make cursors compatible with Python iteration
         protocol.
         """
         return self
@@ -621,7 +621,7 @@ def connect(server='.', user=None, password=None, database='', timeout=0,
     :keyword conn_properties: SQL queries to send to the server upon connection
                               establishment. Can be a string or another kind
                               of iterable of strings
-    :keyword autocommit: Whether to use default autocommiting mode or not
+    :keyword autocommit: Whether to use default autocommitting mode or not
     :type autocommit: boolean
     :keyword tds_version: TDS protocol version to use.
     :type tds_version: string
@@ -666,7 +666,7 @@ def connect(server='.', user=None, password=None, database='', timeout=0,
 
 def get_max_connections():
     """
-    Get the maximum number of simulatenous connections pymssql will open
+    Get the maximum number of simultaneous connections pymssql will open
     to the server.
     """
     return _mssql.get_max_connections()
@@ -680,36 +680,13 @@ def set_max_connections(int limit):
     """
     _mssql.set_max_connections(limit)
 
-# Only recent versions of FreeTDS have the ct_config function
-# so this can break builds
-# Maybe later we can enable this or make it conditional
-DEF HAS_CT_CONFIG = False
-IF HAS_CT_CONFIG:
-    cdef extern from "ctpublic.h":
-        ctypedef int      CS_INT
-        ctypedef void     CS_VOID
-        struct            _CS_CONTEXT
-        ctypedef _CS_CONTEXT CS_CONTEXT
-        ctypedef CS_INT   CS_RETCODE
-
-        int CS_GET, CS_VERSION
-
-        CS_RETCODE ct_config(CS_CONTEXT * ctx, CS_INT action, CS_INT property,
-                             CS_VOID * buffer, CS_INT buflen, CS_INT * outlen)
-
-    def get_freetds_version():
-        cdef CS_CONTEXT *ctx = NULL
-        cdef char buf[256]
-        cdef int outlen
-
-        ret = ct_config(ctx, CS_GET, CS_VERSION, buf, 256, &outlen)
-        return buf
-
 def get_dbversion():
     """
     Return string representing the version of db-lib.
     """
     return _mssql.get_dbversion()
+
+get_freetds_version = get_dbversion
 
 def version_info():
     """

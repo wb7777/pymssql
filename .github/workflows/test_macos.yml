@@ -7,6 +7,9 @@ on:
     paths-ignore:
         - docs/**
         - ChangeLog*
+        - .github/workflows/test_linux.yml
+        - .github/workflows/test_windows.yml
+        - dev/build_manylinux_wheels.sh
     tags:
         - 'v[0-9]+.[0-9]+.[0-9]+'
         - 'v[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
@@ -16,6 +19,9 @@ on:
     paths-ignore:
         - docs/**
         - ChangeLog*
+        - .github/workflows/test_linux.yml
+        - .github/workflows/test_windows.yml
+        - dev/build_manylinux_wheels.sh
 
 jobs:
   build:
@@ -23,12 +29,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-            python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
+            python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
             os: [macos-latest]
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -52,7 +58,7 @@ jobs:
             python dev/build.py \
                 --ws-dir=./freetds \
                 --dist-dir=./dist \
-                --freetds-version="1.3.13" \
+                --freetds-version="1.4.2" \
                 --with-openssl=yes \
                 --sdist \
                 --static-freetds

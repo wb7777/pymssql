@@ -24,18 +24,10 @@ This is an effort to convert the pymssql low-level C module to Cython.
 # MA  02110-1301  USA
 #
 
-DEF PYMSSQL_DEBUG = 0
-DEF PYMSSQL_DEBUG_ERRORS = 0
-DEF PYMSSQL_CHARSETBUFSIZE = 100
-DEF MSSQLDB_MSGSIZE = 1024
-DEF PYMSSQL_MSGSIZE = (MSSQLDB_MSGSIZE * 8)
-DEF EXCOMM = 9
-
-# Provide constants missing in FreeTDS 0.82 so that we can build against it
-DEF DBVERSION_71 = 5
-DEF DBVERSION_72 = 6
-# Provide constant missing from FreeTDS 0.91 so that we can build against it
-DEF DBVERSION_73 = 7
+cdef int PYMSSQL_DEBUG = 0
+cdef int PYMSSQL_DEBUG_ERRORS = 0
+cdef enum: PYMSSQL_CHARSETBUFSIZE = 100
+cdef enum: PYMSSQL_MSGSIZE = (1024 * 8)
 
 ROW_FORMAT_TUPLE = 1
 ROW_FORMAT_DICT = 2
@@ -81,8 +73,8 @@ cdef char *_mssql_last_msg_srv = <char *>PyMem_Malloc(PYMSSQL_MSGSIZE)
 _mssql_last_msg_srv[0] = <char>0
 cdef char *_mssql_last_msg_proc = <char *>PyMem_Malloc(PYMSSQL_MSGSIZE)
 _mssql_last_msg_proc[0] = <char>0
-IF PYMSSQL_DEBUG == 1:
-    cdef int _row_count = 0
+
+cdef int _row_count = 0
 
 cdef bytes HOSTNAME = socket.gethostname().encode('utf-8')
 
@@ -240,7 +232,7 @@ def set_wait_callback(a_callable):
     wait_callback = a_callable
 
 # Buffer size for large numbers
-DEF NUMERIC_BUF_SZ = 45
+cdef enum: NUMERIC_BUF_SZ = 45
 
 cdef bytes ensure_bytes(s, encoding='utf-8'):
     try:
@@ -258,7 +250,7 @@ cdef void log(char * message, ...):
 ## Error Handler ##
 ###################
 cdef int err_handler(DBPROCESS *dbproc, int severity, int dberr, int oserr,
-        char *dberrstr, char *oserrstr) with gil:
+        char *dberrstr, char *oserrstr) noexcept with gil:
     cdef char *mssql_lastmsgstr
     cdef int *mssql_lastmsgno
     cdef int *mssql_lastmsgseverity
@@ -274,7 +266,7 @@ cdef int err_handler(DBPROCESS *dbproc, int severity, int dberr, int oserr,
     if oserrstr == NULL:
         oserrstr = ''
 
-    IF PYMSSQL_DEBUG == 1 or PYMSSQL_DEBUG_ERRORS == 1:
+    if (PYMSSQL_DEBUG == 1 or PYMSSQL_DEBUG_ERRORS == 1):
         fprintf(stderr, "\n*** err_handler(dbproc = %p, severity = %d,  " \
             "dberr = %d, oserr = %d, dberrstr = '%s',  oserrstr = '%s'); " \
             "DBDEAD(dbproc) = %d\n", <void *>dbproc, severity, dberr,
@@ -331,7 +323,7 @@ cdef int err_handler(DBPROCESS *dbproc, int severity, int dberr, int oserr,
 #####################
 cdef int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
         int severity, char *msgtext, char *srvname, char *procname,
-        LINE_T line) with gil:
+        LINE_T line) noexcept with gil:
 
     cdef int *mssql_lastmsgno
     cdef int *mssql_lastmsgseverity
@@ -343,7 +335,7 @@ cdef int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
     cdef int _min_error_severity = min_error_severity
     cdef MSSQLConnection conn = None
 
-    IF PYMSSQL_DEBUG == 1:
+    if (PYMSSQL_DEBUG == 1):
         fprintf(stderr, "\n+++ msg_handler(dbproc = %p, msgno = %d, " \
             "msgstate = %d, severity = %d, msgtext = '%s', " \
             "srvname = '%s', procname = '%s', line = %d)\n",
@@ -396,7 +388,7 @@ cdef int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
 
     return 0
 
-cdef int db_sqlexec(DBPROCESS *dbproc):
+cdef int db_sqlexec(DBPROCESS *dbproc) except? 0:
     cdef RETCODE rtc
 
     # The dbsqlsend function sends Transact-SQL statements, stored in the
@@ -419,7 +411,7 @@ cdef int db_sqlexec(DBPROCESS *dbproc):
     # calling wait_callback first...
     return db_sqlok(dbproc)
 
-cdef int db_sqlok(DBPROCESS *dbproc):
+cdef int db_sqlok(DBPROCESS *dbproc) except? 0:
     cdef RETCODE rtc
 
     # If there is a wait callback, call it with the file descriptor we're
@@ -837,7 +829,7 @@ cdef class MSSQLConnection:
         cdef DBDATETIME dt
         cdef DBCOL dbcol
 
-        IF PYMSSQL_DEBUG == 1:
+        if (PYMSSQL_DEBUG == 1):
             sys.stderr.write("convert_db_value: dbtype = %d; length = %d\n" % (dbtype, length))
 
         if dbtype == SQLBIT:
@@ -919,7 +911,7 @@ cdef class MSSQLConnection:
         cdef BYTE *binValue
         cdef DBTYPEINFO decimal_type_info
 
-        IF PYMSSQL_DEBUG == 1:
+        if (PYMSSQL_DEBUG == 1):
             sys.stderr.write("convert_python_value: value = %r; dbtype = %d" % (value, dbtype[0]))
 
         if value is None:
@@ -1026,10 +1018,10 @@ cdef class MSSQLConnection:
             )
             dbValue[0] = <BYTE *>decValue
 
-            IF PYMSSQL_DEBUG == 1:
-                fprintf(stderr, "convert_python_value: Converted value to DBDECIMAL with length = %d\n", length[0])
+            if (PYMSSQL_DEBUG == 1):
+                print("convert_python_value: Converted value to DBDECIMAL with length = %d\n", length[0], file=sys.stderr)
                 for i in range(0, 35):
-                    fprintf(stderr, "convert_python_value: dbValue[0][%d] = %d\n", i, dbValue[0][i])
+                    print("convert_python_value: dbValue[0][%d] = %d\n", i, dbValue[0][i], file=sys.stderr)
 
             return 0
 
@@ -1133,7 +1125,7 @@ cdef class MSSQLConnection:
             conn.execute_query('SELECT * FROM empl WHERE id IN %s',\
                 (tuple([3,5,7,11]),))
 
-        This method is intented to be used on queries that return results,
+        This method is intended to be used on queries that return results,
         i.e. SELECT. After calling this method AND reading all rows from,
         result rows_affected property contains number of rows returned by
         last command (this is how MS SQL returns it).
@@ -1382,7 +1374,7 @@ cdef class MSSQLConnection:
         cdef dict drecord
         log("_mssql.MSSQLConnection.get_row()")
 
-        if PYMSSQL_DEBUG == 1:
+        if (PYMSSQL_DEBUG == 1):
             global _row_count
             _row_count += 1
 
@@ -1400,11 +1392,11 @@ cdef class MSSQLConnection:
             if data == NULL:
                 value = None
             else:
-                IF PYMSSQL_DEBUG == 1:
+                if (PYMSSQL_DEBUG == 1):
                     global _row_count
-                    fprintf(stderr, 'Processing row %d, column %d,' \
+                    print('Processing row %d, column %d,' \
                         'Got data=%x, coltype=%d, len=%d\n', _row_count, col,
-                        data, col_type, len)
+                        data, col_type, len, file=sys.stderr)
                 value = self.convert_db_value(data, col_type, len)
 
             if row_format == _ROW_FORMAT_TUPLE:
@@ -1734,7 +1726,7 @@ cdef class MSSQLStoredProcedure:
             param_name_cstr = ''
             self.had_positional = True
 
-        IF PYMSSQL_DEBUG == 1:
+        if (PYMSSQL_DEBUG == 1):
             sys.stderr.write(
                 "\n--- rpc_bind(name = '%s', status = %d, "
                 "max_length = %d, data_type = %d, data_length = %d\n"
@@ -1918,7 +1910,7 @@ def remove_locale(bytes value):
 
 cdef int _tds_ver_str_to_constant(verstr) except -1:
     """
-        http://www.freetds.org/userguide/choosingtdsprotocol.htm
+        http://www.freetds.org/userguide/choosingtdsprotocol.html
     """
     if verstr == '4.2':
         return DBVERSION_42
@@ -1930,6 +1922,8 @@ cdef int _tds_ver_str_to_constant(verstr) except -1:
         return DBVERSION_72
     if verstr == '7.3':
         return DBVERSION_73
+    if verstr == '7.4':
+        return DBVERSION_74
     if verstr == '8.0':
         return DBVERSION_71
     raise MSSQLException('unrecognized tds version: %s' % verstr)
@@ -2085,7 +2079,7 @@ cdef _substitute_params(toformat, params, charset):
             # do the string substitution
             match_start = match.start(1) + offset
             match_end = match.end(1) + offset
-            toformat = toformat[:match_start] + ensure_bytes(param_val) + toformat[match_end:]
+            toformat = toformat[:match_start] + ensure_bytes(param_val, charset) + toformat[match_end:]
 
             # adjust the offset for the next usage
             offset += offset_adjust
@@ -2111,7 +2105,7 @@ cdef _substitute_params(toformat, params, charset):
             # do the string substitution
             match_start = match.start(1) + offset
             match_end = match.end(1) + offset
-            toformat = toformat[:match_start] + ensure_bytes(param_val) + toformat[match_end:]
+            toformat = toformat[:match_start] + ensure_bytes(param_val, charset) + toformat[match_end:]
             #print(param_val, param_val_len, offset_adjust, match_start, match_end)
             # adjust the offset for the next usage
             offset += offset_adjust

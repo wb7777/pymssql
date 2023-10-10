@@ -34,7 +34,7 @@ To build ``pymssql`` you should have:
   On Windows one easy way is to get prebuild libraries from
   `Chocolatey <https://chocolatey.org/packages/openssl>`_.
 
-For testing the follwing is required:
+For testing the following is required:
 
 * Microsoft SQL Server.
   One possibility is to use official docker images for Microsoft SQL Server
@@ -82,6 +82,11 @@ packages for building pymssql::
 
     apk add git gcc musl-dev krb5-dev openssl-dev freetds-dev
 
+For Debian-based distributions::
+
+    apt update
+    apt install apt-utils git build-essential freetds-dev libssl-dev libkrb5-dev
+
 
 Building ``pymssql`` wheel
 __________________________
@@ -100,8 +105,8 @@ or if on Windows::
 
 then install required python packages::
 
-    pip intall -U pip
-    pip install dev/requirements-dev.txt
+    pip install -U pip
+    pip install -r dev/requirements-dev.txt
 
 If and now build wheel::
 
@@ -132,10 +137,10 @@ PYMSSQL_FREETDS
     if defined, determines prefix of the FreeTDS installation.
 
 PYMSSQL_FREETDS_INCLUDEDIR
-    if defined, alows to fine tune where to search for FreeTDS headers.
+    if defined, allows to fine tune where to search for FreeTDS headers.
 
 PYMSSQL_FREETDS_LIBDIR
-    if defined, alows to fine tune where to search for FreeTDS libraries.
+    if defined, allows to fine tune where to search for FreeTDS libraries.
 
 Example:
 

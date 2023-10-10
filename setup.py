@@ -103,13 +103,8 @@ print("setup.py: library_dirs =>", library_dirs)
 if not WINDOWS and platform.libc_ver()[0] == 'glibc':
     # check for clock_gettime, link with librt for glibc<2.17
     from dev import ccompiler
-    compiler = ccompiler.new_compiler()
-    if not compiler.has_function('clock_gettime(0,NULL)', includes=['time.h']):
-        if compiler.has_function('clock_gettime(0,NULL)', includes=['time.h'], libraries=['rt']):
-            libraries.append('rt')
-        else:
-            print("setup.py: could not locate 'clock_gettime' function required by FreeTDS.")
-            sys.exit(1)
+    ccompiler.check_clock_gettime(libraries)
+
 
 class build_ext(_build_ext):
     """
@@ -154,7 +149,7 @@ class build_ext(_build_ext):
                         ])
                 else:
                     libraries = [
-                        'ct', 'sybdb',
+                        'sybdb',
                         'ws2_32', 'wsock32', 'kernel32', 'shell32',
                     ]
                     if LINK_OPENSSL:
@@ -167,7 +162,7 @@ class build_ext(_build_ext):
                     if BITNESS == 32:
                         e.library_dirs.append("c:/Program Files (x86)/OpenSSL-Win32/lib")
                     else:
-                        e.library_dirs.append("c:/Program Files/OpenSSL-Win64/lib")
+                        e.library_dirs.append("c:/Program Files/OpenSSL/lib")
 
         else:
             if LINK_KRB5:
@@ -324,6 +319,7 @@ setup(
       "Programming Language :: Python :: 3.9",
       "Programming Language :: Python :: 3.10",
       "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
       "Programming Language :: Python :: Implementation :: CPython",
       "Topic :: Database",
       "Topic :: Database :: Database Engines/Servers",
@@ -333,8 +329,8 @@ setup(
       "Operating System :: Unix",
     ],
     zip_safe = False,
-    setup_requires=['setuptools_scm[toml]>=5.0,<8.0', 'Cython>=0.29.22'],
-    tests_require=['psutil<5.9.5', 'pytest', 'pytest-timeout'],
+    setup_requires=['setuptools_scm[toml]>=5.0,<9.0', 'Cython>=0.29.22'],
+    tests_require=['psutil<5.9.6', 'pytest', 'pytest-timeout'],
     ext_modules = ext_modules(),
     packages = [ 'pymssql'],
     package_dir = {'': 'src'},

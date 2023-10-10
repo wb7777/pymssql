@@ -125,6 +125,8 @@ cdef extern from "sqlfront.h":
     int DBVERSION_70
     int DBVERSION_71
     int DBVERSION_72
+    int DBVERSION_73
+    int DBVERSION_74
 
     ## Type Constants ##
     cdef enum:
@@ -767,5 +769,12 @@ cdef extern from "sqlfront.h":
     RETCODE DBSETLDBNAME(LOGINREC *x, char *y)
     RETCODE DBSETLENCRYPT(LOGINREC *login, int x)
     RETCODE DBSETLREADONLY(LOGINREC *login, int x)
+
+
+cdef extern from "syberror.h":
+
+    # severity levels from syberror.h
+
+    int EXCOMM
 
 ctypedef int LINE_T
